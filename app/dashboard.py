@@ -7,13 +7,16 @@ from prophet import Prophet
 import matplotlib.dates as mdates
 
 # подключение к базе
+pg = st.secrets["postgres"]
 conn = psycopg2.connect(
-    dbname="prices_db",
-    user="postgres",
-    password="Raidraid27_",
-    host="localhost",
-    port="5432"
+    dbname=pg["dbname"],
+    user=pg["user"],
+    password=pg["password"],
+    host=pg["host"],
+    port=pg["port"],
+    connect_timeout=10
 )
+
 
 @st.cache_data
 def load_data():
@@ -55,7 +58,7 @@ fig, ax = plt.subplots()
 # линия + точки
 ax.plot(filtered['date'], filtered['price'], marker='o', color='blue', alpha=0.7)
 
-# форматирование оси X
+# форматирование оси икс
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
 fig.autofmt_xdate()
@@ -70,7 +73,7 @@ ax.legend(["Цена"], loc="upper left")
 st.pyplot(fig)
 
 
-# Скачать график
+# скачать график
 buf = io.BytesIO()
 fig.savefig(buf, format="png")
 st.download_button(
@@ -80,7 +83,7 @@ st.download_button(
     mime="image/png",
 )
 
-#  Скачать данные
+#  скачать данные
 csv = filtered.to_csv(index=False).encode('utf-8')
 st.download_button(
     label="📥 Скачать данные (CSV)",
@@ -89,7 +92,7 @@ st.download_button(
     mime="text/csv",
 )
 
-#  Прогноз цен
+#  прогноз цен
 st.subheader("🔮 Прогноз на 6 месяцев")
 if len(filtered) >= 6:
     model_df = filtered[['date', 'price']].rename(columns={'date': 'ds', 'price': 'y'})
@@ -102,13 +105,13 @@ if len(filtered) >= 6:
     ax2.plot(model_df['ds'], model_df['y'], label='Исторические данные', color='blue', alpha=0.6)
     ax2.plot(forecast['ds'], forecast['yhat'], label='Прогноз', color='orange', linestyle='--', alpha=0.8)
 
-    # ✅ форматирование оси X
+    # форматирование оси X
     import matplotlib.dates as mdates
-    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))   # формат YYYY-MM
-    ax2.xaxis.set_major_locator(mdates.MonthLocator(interval=3))   # метки каждые 3 месяца
-    fig2.autofmt_xdate()                                           # подписи под углом
+    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))   
+    ax2.xaxis.set_major_locator(mdates.MonthLocator(interval=3))   
+    fig2.autofmt_xdate()                                          
 
-    # ✅ ограничение по времени (например, до конца 2025)
+    #  ограничение по времени
     ax2.set_xlim([model_df['ds'].min(), pd.to_datetime('2025-12-01')])
 
     ax2.set_title("Прогноз цен")
@@ -121,7 +124,7 @@ else:
     st.warning("Недостаточно данных для прогноза (нужно минимум 6 точек).")
 
 
-# 🏙 Сравнение городов
+# сравнение городов
 st.subheader("🏙️ Сравнение городов")
 multi_city = df[df['product'] == product]
 pivot = multi_city.pivot_table(index='date', columns='city', values='price')
