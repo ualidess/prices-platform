@@ -7,15 +7,14 @@ from prophet import Prophet
 import matplotlib.dates as mdates
 
 # подключение к базе
-pg = st.secrets["postgres"]
 conn = psycopg2.connect(
-    dbname=pg["dbname"],
-    user=pg["user"],
-    password=pg["password"],
-    host=pg["host"],
-    port=pg["port"],
-    connect_timeout=10
+    dbname="prices_db",
+    user="postgres",
+    password="Raidraid27_",
+    host="localhost",
+    port="5432"
 )
+
 
 
 @st.cache_data
